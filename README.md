@@ -64,8 +64,7 @@ bayes_opt = BayesianOptimization(target_function=y, domain_min=-4, domain_max=16
 # bayes_opt.maximise()  # Perform maximization
 bayes_opt.best_fit()  # Perform best fit
 ```
-* Note
-The plots are saved in the output directory
+**Note:** The plots are saved in the output directory.
  
 ## Results
 The code will fit the GPR model to the initial training data and visualize the initial predictions. Then, it will perform the iterative Bayesian optimization process and update the predictions at each step. The resulting plots will show the true function, the predicted function, the training data points, and the uncertainty region.
