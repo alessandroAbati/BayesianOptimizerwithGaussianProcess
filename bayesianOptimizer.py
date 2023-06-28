@@ -78,7 +78,7 @@ class GPR:
         return self.params["sigma_f"] ** 2 * np.exp(-0.5 / self.params["l"] ** 2 * dist_matrix)
 
 class BayesianOptimization:
-    def __init__(self, target_function, domain_min: int, domain_max: int, initial_points: list, n_steps=30):
+    def __init__(self, target_function, domain_min: int, domain_max: int, initial_points: list, n_steps=5):
         # Initialize the Bayesian Optimization class
         self.f = target_function
         self.n_steps = n_steps
@@ -92,13 +92,14 @@ class BayesianOptimization:
         mu, cov = self.gpr.predict(self.test_X)
         test_y = mu.ravel()
         uncertainty = np.sqrt(np.diag(cov))
-        plt.figure()
+        plt.figure(figsize=(13,9))
         plt.plot(self.test_X, [self.f(x) for x in self.test_X], c='darkorange', label='true')
-        plt.title("Initialization:  l=%.2f sigma_f=%.2f" % (self.gpr.params["l"], self.gpr.params["sigma_f"]))
+        plt.title("Initialization - hyperparameters:  l=%.2f sigma_f=%.2f" % (self.gpr.params["l"], self.gpr.params["sigma_f"]), fontsize=22)
         plt.fill_between(self.test_X.ravel(), test_y + uncertainty, test_y - uncertainty, alpha=0.15, color='royalblue')        
         plt.plot(self.test_X, test_y, label="predict", c='royalblue')
         plt.scatter(self.train_X, self.train_y, label="train", c="darkred", marker="x")
-        plt.legend()
+        plt.legend(loc='lower right', fontsize=20)
+        plt.savefig("output/Init")
         plt.show()
 
     def get_next_guess_ei(self, mu, cov):
@@ -129,15 +130,27 @@ class BayesianOptimization:
             mu, cov = self.gpr.predict(self.test_X)
             test_y = mu.ravel()
             uncertainty = np.sqrt(np.diag(cov))
-            plt.figure()
+            plt.figure(figsize=(13,9))
             plt.plot(self.test_X, (i+1)*ei, c='green', label = f'{i+1}*EI')
             plt.plot(self.test_X, [self.f(x) for x in self.test_X], c='darkorange', label='true')
-            plt.title("l=%.2f sigma_f=%.2f" % (self.gpr.params["l"], self.gpr.params["sigma_f"]))
+            plt.title(f"Maximize - step n° {i+1} - hyperparameters: l=%.2f sigma_f=%.2f" % (self.gpr.params["l"], self.gpr.params["sigma_f"]), fontsize=22)
             plt.fill_between(self.test_X.ravel(), test_y + uncertainty, test_y - uncertainty, alpha=0.15, color='royalblue')        
             plt.plot(self.test_X, test_y, label="predict", c='royalblue')
             plt.scatter(self.train_X, self.train_y, label="train", c="darkred", marker="x")
-            plt.legend()
+            plt.legend(loc='lower right', fontsize=20)
+            plt.savefig(f"output/Maximize{i+1}.png")
             plt.show()
+        x_max = self.train_X[self.train_y.index(np.max(self.train_y))]
+        plt.figure(figsize=(13,9))
+        plt.axvline(x_max, c='mediumvioletred', label = f'max')
+        plt.plot(self.test_X, [self.f(x) for x in self.test_X], c='darkorange', label='true')
+        plt.title("Maximize - hyperparameters: l=%.2f sigma_f=%.2f" % (self.gpr.params["l"], self.gpr.params["sigma_f"]), fontsize=22)
+        plt.fill_between(self.test_X.ravel(), test_y + uncertainty, test_y - uncertainty, alpha=0.15, color='royalblue')        
+        plt.plot(self.test_X, test_y, label="predict", c='royalblue')
+        plt.scatter(self.train_X, self.train_y, label="train", c="darkred", marker="x")
+        plt.legend(loc='lower right', fontsize=20)
+        plt.savefig(f"output/MaximizeFinal.png")
+        plt.show()
 
     def best_fit(self):
         # Perform iterative Bayesian optimization to find the best fit of the model
@@ -153,11 +166,12 @@ class BayesianOptimization:
             uncertainty = np.sqrt(np.diag(cov))
             plt.figure()
             plt.plot(self.test_X, [self.f(x) for x in self.test_X], c='darkorange', label='true')
-            plt.title("l=%.2f sigma_f=%.2f" % (self.gpr.params["l"], self.gpr.params["sigma_f"]))
+            plt.title(f"Best Fit - step n° {i+1} - hyperparameters: l=%.2f sigma_f=%.2f" % (self.gpr.params["l"], self.gpr.params["sigma_f"]))
             plt.fill_between(self.test_X.ravel(), test_y + uncertainty, test_y - uncertainty, alpha=0.15, color='royalblue')        
             plt.plot(self.test_X, test_y, label="predict", c='royalblue')
             plt.scatter(self.train_X, self.train_y, label="train", c="darkred", marker="x")
             plt.legend()
+            plt.savefig(f"output/BestFit{i+1}")
             plt.show()
 
 if __name__ == '__main__':
@@ -168,6 +182,6 @@ if __name__ == '__main__':
         return y.tolist()
 
     # Create an instance of BayesianOptimization and perform maximization
-    bayes_opt = BayesianOptimization(target_function=y, domain_min=-4, domain_max=16, initial_points=[3, 4, 5, 9])
-    #bayes_opt.maximise()
-    bayes_opt.best_fit()
+    bayes_opt = BayesianOptimization(target_function=y, domain_min=-4, domain_max=16, initial_points=[3, 4, 5, 9], n_steps=20)
+    bayes_opt.maximise()
+    #bayes_opt.best_fit()
